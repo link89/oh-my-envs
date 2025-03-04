@@ -29,6 +29,7 @@ git clone --depth 1 https://github.com/Isra3l/ligpargen.git
 cd ligpargen
 sed -i 's/3.7/3.10/' setup.py
 git diff
+pip install --no-cache-dir rdkit
 pip install --no-cache-dir -e .
 EOF
 
