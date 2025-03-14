@@ -1,0 +1,37 @@
+#!/bin/bash
+
+cd "$(dirname "$0")"
+set -e
+
+# Prompt for FDE passphrase
+echo -n "Enter password for FDE: "
+read -s FDE_PASS
+echo ""
+
+SSH_CMD="ssh ai4ec-demo"
+
+[ -f "tpm2-fde.done" ] || {
+
+$SSH_CMD << SSH_EOF
+sudo apt-get update
+sudo apt-get install -y tpm2-initramfs-tool
+sudo tpm2-initramfs-tool seal --data "$FDE_PASS"
+
+# edit /etc/crypttab, change "none" to "unseal", append keyscript=/usr/bin/tpm2-initramfs-tool
+sudo sed -i -e 's#none#unseal,keyscript=/usr/bin/tpm2-initramfs-tool#' /etc/crypttab
+
+# Add binaries and libraries to initramfs
+
+sudo cat > /etc/initramfs-tools/hooks/tpm2-initramfs-tool <<EOF
+. /usr/share/initramfs-tools/hook-functions
+
+copy_exec /usr/lib/x86_64-linux-gnu/libtss2-tcti-device.so.0
+copy_exec /usr/bin/tpm2-initramfs-tool
+EOF
+sudo chmod 755 /etc/initramfs-tools/hooks/tpm2-initramfs-tool
+sudo update-initramfs -u
+
+
+SSH_EOF
+touch tpm2-fde.done
+}
