@@ -2,6 +2,18 @@
 cd "$(dirname "$0")"
 source common.sh
 
+[ -f "ubuntu-dev.done" ] || {
+$SSH_CMD << SSH_EOF
+set -e
+sudo apt update
+sudo apt install -y build-essential
+sudo apt install -y git
+
+SSH_EOF
+touch ubuntu-dev.done
+}
+
+
 [ -f "cuda.done" ] || {
 $SSH_CMD << SSH_EOF
 sudo apt install linux-headers-$(uname -r)
@@ -22,28 +34,3 @@ touch cuda.done
 
 
 
-[ -f "ubuntu-dev.done" ] || {
-$SSH_CMD << SSH_EOF
-set -e
-sudo apt update
-sudo apt install -y build-essential
-sudo apt install -y git
-
-
-
-SSH_EOF
-touch ubuntu-dev.done
-}
-
-# download
-[ -f "conda-env.done" ] || {
-$SSH_CMD << SSH_EOF
-set -e
-
-conda create -n ai4ec python=3.10.
-
-
-
-SSH_EOF
-touch conda-env.done
-}
