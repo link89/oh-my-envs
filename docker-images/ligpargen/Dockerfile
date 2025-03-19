@@ -1,15 +1,10 @@
 FROM python:3.10-slim
 ENV BOSSdir=/opt/boss
+ENV PACKMOL=/opt/packmol-20.16.0
+ENV PATH=$PATH:$BOSSdir:$PACKMOL
 
 WORKDIR /opt
 
-COPY boss0615.tar.gz /opt/
-RUN <<EOF
-set -e
-# Extract boss tarball and compile boss
-echo "Extracting boss0615.tar.gz"
-tar -xzvf boss0615.tar.gz
-EOF
 
 RUN <<EOF
 set -e
@@ -17,8 +12,23 @@ env | grep -i proxy
 dpkg --add-architecture i386
 apt-get update
 apt-get install -y libc6:i386 libstdc++6:i386
-apt-get install -y git csh openbabel libopenbabel-dev build-essential 
+apt-get install -y git csh openbabel libopenbabel-dev build-essential gfortran
+
 apt-get clean && rm -rf /var/lib/apt/lists/*
+EOF
+
+
+RUN --mount=type=bind,target=/mnt/data <<EOF
+set -e
+# Extract boss tarball
+tar -xzvf /mnt/data/boss0615.tar.gz
+
+# Extract packmol tarball and compile
+echo $PATH
+tar -xzvf /mnt/data/packmol-20.16.0.tar.gz
+cd packmol-20.16.0
+./configure
+make
 EOF
 
 
